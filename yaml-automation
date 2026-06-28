@@ -12,25 +12,23 @@ actions:
         }}
       error: "{{ shelly - 10 }}"
   - condition: template
-    value_template: "{{ error | abs > 10 }}"
+    value_template: "{{ error | abs > 20 }}"
   - variables:
       step: |
         {% if error > 0 %}
-          10
+          15
         {% else %}
-          -10
+          -15
         {% endif %}
       target: |
         {% set t = current + step %}
         {% set is_night = now().hour >= 0 and now().hour < 7 %}
-        {% if t < 0 %}
-          0
-        {% elif t > 345 %}
-          345
-        {% endif %}
-
         {% if is_night and t > 50 %}
           50
+        {% elif t < 0 %}
+          0
+        {% elif t > 300 %}
+          300      
         {% else %}
           {{ t }}
         {% endif %}
