@@ -1,0 +1,44 @@
+alias: Zendure Controllo Shelly Stabile (No Oscillazioni)
+triggers:
+  - seconds: /5
+    trigger: time_pattern
+actions:
+  - variables:
+      shelly: >-
+        {{ states('sensor.shellyemg3_d885ac0af060_energy_meter_0_potenza') |
+        float(0) }}
+      current: >-
+        {{ states('number.flavio_s_solarflow_800_pro2_output_limit') | float(0)
+        }}
+      error: "{{ shelly - 10 }}"
+  - condition: template
+    value_template: "{{ error | abs > 10 }}"
+  - variables:
+      step: |
+        {% if error > 0 %}
+          10
+        {% else %}
+          -10
+        {% endif %}
+      target: |
+        {% set t = current + step %}
+        {% set is_night = now().hour >= 0 and now().hour < 7 %}
+        {% if t < 0 %}
+          0
+        {% elif t > 345 %}
+          345
+        {% endif %}
+
+        {% if is_night and t > 50 %}
+          50
+        {% else %}
+          {{ t }}
+        {% endif %}
+  - condition: template
+    value_template: "{{ (current - target) | abs > 10 }}"
+  - target:
+      entity_id: number.flavio_s_solarflow_800_pro2_output_limit
+    data:
+      value: "{{ target }}"
+    action: number.set_value
+mode: single
